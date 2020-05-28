@@ -1,5 +1,5 @@
 # Touchbase demo
-A proof of concept for pushing a .csv file to [Touchbase](https://touchbase.report)
+A proof of concept for pushing a .csv file to [Touchbase](https://touchbase.report). [Full documentation is available on the Touchbase website](https://docs.touchbase.report)
 
 # Usage
 Run the script with `python run.py` or use the [Poetry package manager](https://python-poetry.org/docs/).
