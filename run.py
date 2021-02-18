@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-df = pd.read_csv('demo.csv')
+df = pd.read_csv('files/demo.csv')
 
 endpoint = 'http://api.touchbase.report/api/report/'
 access_key_id = os.getenv('ACCESS_KEY_ID')
