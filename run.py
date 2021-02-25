@@ -32,26 +32,57 @@ files = [
         'report_path': ['Sales'],
         'id_headers': ['Sales Order', 'Sales Order Line'],
         'foreign_key_headers': [['Sales Order'], ['Product Number']]
-    },             
-]
+    },
+    {
+        'path': 'files/suppliers.xlsx',
+        'report_name': 'Suppliers',
+        'report_path': ['Purchasing'],
+        'id_headers': ['Supplier'],
+    },    
 
+]
 
 endpoint = 'http://api.touchbase.report/api/report/'
 access_key_id = os.getenv('ACCESS_KEY_ID')
 access_key = os.getenv('ACCESS_KEY')
 
-for file in files:
-    df = pd.read_excel(file['path'], engine='openpyxl', parse_dates=False)
+def push_report(payload: dict):
+    headers = {'access_key_id': access_key_id, 'access_key': access_key}
+    r = requests.post(endpoint, json=payload, headers=headers)
+    return r
+
+def excel_to_df(path: str):
+    df = pd.read_excel(path, engine='openpyxl', parse_dates=False)
     date_cols = df.select_dtypes(include=[np.datetime64])
     for col in date_cols:
         df[col] = df[col].dt.strftime('%Y-%m-%d')
-    payload = {
-        'id_headers': file['id_headers'],
-        'table':df.to_json(orient='records'),
-        'report_path': file['report_path'],
-        'report_name': file['report_name'],
-        'foreign_key_headers': file.get('foreign_key_headers')
-    }
-    headers = {'access_key_id': access_key_id, 'access_key': access_key}
-    r = requests.post(endpoint, json=payload, headers=headers)
-    print('Report pushed to Touchbase with status: ' + str(r.status_code) + '; ' + str(r.text))
+    return df
+
+def push_files(files: list, foreign_key_headers: list = []):    
+    for file in files:
+        df = excel_to_df(path=file['path'])
+        if foreign_key_headers is None:
+            foreign_key_headers = file.get('foreign_key_headers')
+        payload = {
+            'id_headers': file['id_headers'],
+            'table':df.to_json(orient='records'),
+            'report_path': file['report_path'],
+            'report_name': file['report_name'],
+            'foreign_key_headers': foreign_key_headers 
+        }
+        r = push_report(payload=payload)
+        print(f"Report \"{file['report_name']}\" pushed to Touchbase with status = {str(r.status_code)}; {str(r.text)}")
+
+push_standard = False
+push_supplier = True
+
+# Push all files without supplier
+if push_standard:
+    push_files(files = [f for f in files if f['path'] != 'files/suppliers.xlsx'])
+
+# Also push suppliers
+if push_supplier:
+    push_files(files = [f for f in files if f['path'] == 'files/suppliers.xlsx'])
+    push_files(files = [f for f in files if f['path'] == 'files/purchase_order_lines.xlsx'], foreign_key_headers=[['Product Number'],['Supplier']])
+    
+
