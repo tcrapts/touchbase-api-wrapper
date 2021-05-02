@@ -1,15 +1,18 @@
 [tool.poetry]
-name = "touchbase-demo"
+name = "touchbase-api-wrapper"
 version = "0.1.0"
 description = ""
 authors = ["Terry Crapts <tcrapts@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.6.1"
+python = "^3.9.0"
 pandas = "^1.0.3"
 requests = "^2.23.0"
 watchdog = "^0.10.2"
 python-dotenv = "^0.15.0"
+matplotlib = "^3.4.1"
+black = "^21.4b2"
+flake8 = "^3.9.1"
 
 [tool.poetry.dev-dependencies]
 
