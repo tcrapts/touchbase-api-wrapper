@@ -4,11 +4,13 @@ import json
 import os
 from dotenv import load_dotenv
 from typing import Dict
+import base64
 
 load_dotenv()
 
 df = pd.read_csv("files/demo.csv")
-api_url = "http://api.touchbase.report/api/"
+# api_url = "http://api.touchbase.report/api/"
+api_url = "http://localhost:3030/api"
 
 
 def get_headers() -> Dict[str, str]:
@@ -38,31 +40,33 @@ def push_csv(df: pd.DataFrame):
     )
 
 
-def create_report(report_name: str, report_path: list) -> int:
+def create_report(report_name: str, report_path: list, report_type: str) -> int:
     # create report first
     r = requests.post(
         url=f"{api_url}/report",
         data={
             "report_path": report_path,
             "report_name": report_name,
-            "report_type": "image",
+            "report_type": report_type,
         },
         headers=get_headers(),
     )
-    response = json.loads(r.text)
     if r.status_code == 200:
+        response = json.loads(r.text)
         return response["reportId"]
     else:
-        raise ValueError("Report not created", response)
+        raise ValueError("Report not created", r.text)
 
 
-def push_image(df: pd.DataFrame):
+def push_image():
     # create report first
-    report_id = create_report(report_name="Demo img", report_path=["Demo"])
-    ax = df.plot.bar(x="Description", y="Order")
-    fig = ax.get_figure()
-    img_path = "img/plot.png"
-    fig.savefig(img_path)
+    report_id = create_report(
+        report_name="Demo img", report_path=["Demo"], report_type="image"
+    )
+    img_path = "files/plot.png"
+    # ax = df.plot.bar(x="Description", y="Order")
+    # fig = ax.get_figure()
+    # fig.savefig(img_path)
     endpoint = f"{api_url}/report/{report_id}/image"
     files = {"file": open(img_path, "rb")}
     r = requests.put(endpoint, files=files, headers=get_headers(), timeout=5)
@@ -74,5 +78,35 @@ def push_image(df: pd.DataFrame):
     )
 
 
-push_csv(df)
-push_image(df)
+def push_html():
+    # create report first
+    report_id = create_report(
+        report_name="Folium", report_path=["Demo"], report_type="html"
+    )
+    endpoint = f"{api_url}/report/{report_id}/file"
+    with open("files/folium.html", "rb") as f:
+        html = f.read()
+        file_base64 = base64.b64encode(html)
+        r = requests.put(
+            endpoint,
+            data={"file": file_base64},
+            headers=get_headers(),
+            timeout=5,
+        )
+        print(
+            "Html pushed to Touchbase with status: "
+            + str(r.status_code)
+            + "; "
+            + str(r.text)
+        )
+
+
+push_html()
+
+# push_csv(df)
+# for x in range(5):
+#     push_image()
+# report_id = create_report(
+#     report_name="Plotly", report_path=["Demo"], report_type="html"
+# )
+# print(report_id)
